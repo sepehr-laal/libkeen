@@ -6,6 +6,8 @@
 #include <chrono>
 #include <ctime>
 
+#include <windows.h>
+
 // by default turn on both file and console
 // logging behaviors.
 
@@ -47,6 +49,10 @@ Logger::Logger(const std::string& type)
 
 void Logger::log(const std::string& message)
 {
+    // regardless of what user chooses,
+    // always output to DebugView.
+    ::OutputDebugStringA(message.c_str());
+
 #if LIBKEEN_LOG_TO_CONSOLE || LIBKEEN_LOG_TO_LOGFILE
 
     try {
