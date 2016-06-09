@@ -1,12 +1,53 @@
 #include "core.hpp"
+#include "curl.hpp"
+#include "cache.hpp"
 #include "logger.hpp"
-#include "keen/client.hpp"
 
-#include "internal/curl.hpp"
-#include "internal/cache.hpp"
+namespace {
 
-namespace libkeen {
-namespace internal {
+std::string implode(const std::vector<std::string>& elements, char glue)
+{
+    switch (elements.size())
+    {
+    case 0:
+        return "";
+    case 1:
+        return elements[0];
+    default:
+        std::ostringstream os;
+        std::copy(elements.begin(), elements.end() - 1, std::ostream_iterator<std::string>(os, std::string(1, glue).c_str()));
+        os << *elements.rbegin();
+        return os.str();
+    }
+}
+
+std::vector<std::string> explode(const std::string &input, char separator)
+{
+    std::vector<std::string> ret;
+    std::string::const_iterator cur = input.begin();
+    std::string::const_iterator beg = input.begin();
+    bool added = false;
+    while (cur < input.end())
+    {
+        if (*cur == separator)
+        {
+            ret.insert(ret.end(), std::string(beg, cur));
+            beg = ++cur;
+            added = true;
+        }
+        else
+        {
+            cur++;
+        }
+    }
+
+    ret.insert(ret.end(), std::string(beg, cur));
+    return ret;
+}
+
+}
+
+namespace libmetrics {
 
 CoreRef Core::instance(AccessType type)
 {
@@ -112,31 +153,65 @@ Core::~Core()
     LOG_INFO("Core is shutdown.");
 }
 
-void Core::postEvent(const std::string& url, const std::string& json)
+void Core::postEvent(
+    const std::string& url,
+    const std::string& data,
+    const std::vector<std::string>& headers)
 {
-    LOG_INFO("Attempting to post and event to: " << url << " with json: " << json);
+    LOG_INFO("Attempting to post and event to: " << url << " with data: " << data);
+
     mIoService.post([=]
     {
-        if (!mCurlRef->sendEvent(url, json))
-            mCacheRef->push(url, json);
+        auto response = mCurlRef->postData(url, data, headers);
+
+        if (response < 200 || response > 300)
+        {
+            auto headers_copy = headers;
+            headers_copy.push_back(url);
+            mCacheRef->push(implode(headers_copy, '\n'), data);
+
+            LOG_WARN("Cached event for: " << url << " and data: " << data);
+        }
+        else
+        {
+            LOG_INFO("Sent event for: " << url << " and data: " << data);
+        }
     });
 }
 
 void Core::postCache(unsigned count)
 {
     LOG_INFO("Attempting to post cache with count: " << count);
-    mIoService.post([this, count]
+
+    mIoService.post([=]
     {
         std::vector<std::pair<std::string, std::string>> caches;
         mCacheRef->pop(caches, count);
 
+        if (caches.empty())
+            return;
+
         for (auto& entry : caches)
         {
-            LOG_DEBUG("Attempting to post cached event to: " << entry.first << " with json: " << entry.second);
-            mIoService.post([this, entry]
+            auto entry_decoded = explode(entry.first, '\n');
+            auto url = entry_decoded.back();
+            entry_decoded.pop_back();
+
+            LOG_DEBUG("Attempting to post cached event to: " << url << " with data: " << entry.second);
+
+            mIoService.post([=]
             {
-                if (mCurlRef->sendEvent(entry.first, entry.second))
+                auto response = mCurlRef->postData(url, entry.second, entry_decoded);
+
+                if (response < 200 || response > 300)
+                {
+                    LOG_INFO("Failed sending cached event for: " << url << " and data: " << entry.second);
+                }
+                else
+                {
                     mCacheRef->remove(entry.first, entry.second);
+                    LOG_INFO("Cache deleted for: " << url << " and data: " << entry.second);
+                }
             });
         }
     });
@@ -144,8 +219,12 @@ void Core::postCache(unsigned count)
 
 void Core::flush()
 {
+    LOG_INFO("Flushing the core.");
+
     shutdown();
     respawn();
+
+    LOG_INFO("Flush finished.");
 }
 
 void Core::enableLogToFile(bool on /*= true*/)
@@ -173,4 +252,4 @@ unsigned Core::useCount()
     else return static_cast<unsigned>(instance(AccessType::Current).use_count()) - 1;
 }
 
-}}
+}

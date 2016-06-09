@@ -1,6 +1,6 @@
 #pragma once
 
-#include "keen.hpp"
+#include "fwd.hpp"
 
 #ifndef LIBKEEN_LOG_TO_CONSOLE
 #   define LIBKEEN_LOG_TO_CONSOLE 1
@@ -10,8 +10,7 @@
 #   define LIBKEEN_LOG_TO_LOGFILE 1
 #endif
 
-namespace libkeen {
-namespace internal {
+namespace libmetrics {
 
 /*!
  * @class Logger
@@ -48,11 +47,11 @@ std::shared_ptr<Logger> error();
 std::shared_ptr<Logger> warn();
 std::shared_ptr<Logger> info();
 
-#define LOG_DEBUG(stream)   { std::stringstream ss; ss << stream << " [" << __FILE__ << "@ln" << __LINE__ << "]"; libkeen::internal::loggers::debug()->log(ss.str()); }
-#define LOG_ERROR(stream)   { std::stringstream ss; ss << stream << " [" << __FILE__ << "@ln" << __LINE__ << "]"; libkeen::internal::loggers::error()->log(ss.str()); }
-#define LOG_WARN(stream)    { std::stringstream ss; ss << stream << " [" << __FILE__ << "@ln" << __LINE__ << "]"; libkeen::internal::loggers::warn()->log(ss.str()); }
-#define LOG_INFO(stream)    { std::stringstream ss; ss << stream << " [" << __FILE__ << "@ln" << __LINE__ << "]"; libkeen::internal::loggers::info()->log(ss.str()); }
+#define LOG_DEBUG(stream)   { std::stringstream ss; ss << stream << " [" << __FILE__ << "@ln" << __LINE__ << "]"; libmetrics::loggers::debug()->log(ss.str()); }
+#define LOG_ERROR(stream)   { std::stringstream ss; ss << stream << " [" << __FILE__ << "@ln" << __LINE__ << "]"; libmetrics::loggers::error()->log(ss.str()); }
+#define LOG_WARN(stream)    { std::stringstream ss; ss << stream << " [" << __FILE__ << "@ln" << __LINE__ << "]"; libmetrics::loggers::warn()->log(ss.str()); }
+#define LOG_INFO(stream)    { std::stringstream ss; ss << stream << " [" << __FILE__ << "@ln" << __LINE__ << "]"; libmetrics::loggers::info()->log(ss.str()); }
 
 }
 
-}}
+}

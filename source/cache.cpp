@@ -1,17 +1,16 @@
-#include "internal/cache.hpp"
-
+#include "cache.hpp"
 #include "logger.hpp"
 #include "scoped.hpp"
-#include "sqlite3.h"
 
-namespace libkeen {
-namespace internal {
+#include <sqlite3.h>
+
+namespace libmetrics {
 
 Cache::Cache()
     : mConnection(nullptr)
 {
     // Make sure logger stays alive for our life-time
-    internal::Logger::pull(mLoggerRefs);
+    Logger::pull(mLoggerRefs);
 
     if (sqlite3_threadsafe() != SQLITE_CONFIG_SERIALIZED)
     {
@@ -21,7 +20,7 @@ Cache::Cache()
     }
 
     // Open a connection to cache database
-    if (sqlite3_open("libkeen.db", &mConnection) != SQLITE_OK)
+    if (sqlite3_open("libmetrics.db", &mConnection) != SQLITE_OK)
     {
         LOG_ERROR("Establishing database connection failed.");
         mConnection = nullptr;
@@ -80,7 +79,7 @@ void Cache::push(const std::string& url, const std::string& data)
     }
     
     sqlite3_stmt *stmt = nullptr;
-    internal::Scoped<sqlite3_stmt> scope_bound_stmt(stmt);
+    Scoped<sqlite3_stmt> scope_bound_stmt(stmt);
 
     std::stringstream ss;
     ss << "INSERT OR IGNORE INTO cache (url, data) VALUES ('" << url << "','" << data << "')";
@@ -107,7 +106,7 @@ bool Cache::exists(const std::string& url, const std::string& data) const
     if (!connected()) return false;
 
     sqlite3_stmt *stmt = nullptr;
-    internal::Scoped<sqlite3_stmt> scope_bound_stmt(stmt);
+    Scoped<sqlite3_stmt> scope_bound_stmt(stmt);
 
     std::stringstream ss;
     ss << "SELECT * FROM cache WHERE url='" << url << "' AND data='" << data << "' LIMIT 1";
@@ -132,7 +131,7 @@ void Cache::pop(std::vector<std::pair<std::string, std::string>>& records, unsig
     if (!records.empty()) records.clear();
 
     sqlite3_stmt *stmt = nullptr;
-    internal::Scoped<sqlite3_stmt> scope_bound_stmt(stmt);
+    Scoped<sqlite3_stmt> scope_bound_stmt(stmt);
 
     std::stringstream ss;
     ss << "SELECT url, data FROM cache LIMIT " << count;
@@ -164,7 +163,7 @@ void Cache::remove(const std::string& url, const std::string& data)
     }
 
     sqlite3_stmt *stmt = nullptr;
-    internal::Scoped<sqlite3_stmt> scope_bound_stmt(stmt);
+    Scoped<sqlite3_stmt> scope_bound_stmt(stmt);
 
     std::stringstream ss;
     ss << "DELETE FROM cache WHERE url='" << url << "' AND data='" << data << "'";
@@ -196,7 +195,7 @@ void Cache::clear()
     if (!connected()) return;
 
     sqlite3_stmt *stmt = nullptr;
-    internal::Scoped<sqlite3_stmt> scope_bound_stmt(stmt);
+    Scoped<sqlite3_stmt> scope_bound_stmt(stmt);
 
     std::stringstream ss;
     ss << "DELETE FROM cache";
@@ -221,7 +220,7 @@ int Cache::count() const
     if (!connected()) return 0;
 
     sqlite3_stmt *stmt = nullptr;
-    internal::Scoped<sqlite3_stmt> scope_bound_stmt(stmt);
+    Scoped<sqlite3_stmt> scope_bound_stmt(stmt);
 
     std::stringstream ss;
     ss << "SELECT * FROM cache";
@@ -239,4 +238,4 @@ int Cache::count() const
     return count;
 }
 
-}}
+}

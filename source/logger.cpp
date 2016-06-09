@@ -1,4 +1,4 @@
-#include "internal/logger.hpp"
+#include "logger.hpp"
 
 #include <iostream>
 #include <fstream>
@@ -6,7 +6,9 @@
 #include <chrono>
 #include <ctime>
 
-#include <windows.h>
+#ifdef _WIN32
+#   include <windows.h>
+#endif
 
 // by default turn on both file and console
 // logging behaviors.
@@ -31,8 +33,7 @@ std::string now()
     return ss.str();
 }}
 
-namespace libkeen {
-namespace internal {
+namespace libmetrics {
 
 Logger::~Logger()
 {
@@ -49,9 +50,12 @@ Logger::Logger(const std::string& type)
 
 void Logger::log(const std::string& message)
 {
+
+#ifdef _WIN32
     // regardless of what user chooses,
     // always output to DebugView.
     ::OutputDebugStringA(message.c_str());
+#endif
 
 #if LIBKEEN_LOG_TO_CONSOLE || LIBKEEN_LOG_TO_LOGFILE
 
@@ -73,7 +77,7 @@ void Logger::log(const std::string& message)
 #if LIBKEEN_LOG_TO_LOGFILE
         if (mLogToFile)
         {
-            std::ofstream("libkeen.log", std::ios_base::app | std::ios_base::out) << msg.str();
+            std::ofstream("libmetrics.log", std::ios_base::app | std::ios_base::out) << msg.str();
         }
 #endif // LIBKEEN_LOG_TO_LOGFILE
 
@@ -135,4 +139,4 @@ std::shared_ptr<Logger> loggers::info()
     return info_logger;
 }
 
-}}
+}

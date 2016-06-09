@@ -2,11 +2,10 @@
 
 #include "scoped.hpp"
 
-#include "curl/curl.h"
-#include "sqlite3.h"
+#include <curl/curl.h>
+#include <sqlite3.h>
 
-namespace libkeen {
-namespace internal {
+namespace libmetrics {
 
 template<>
 void Scoped<CURL>::onScopeEnd()
@@ -29,4 +28,4 @@ void Scoped<sqlite3_stmt>::onScopeEnd()
     sqlite3_finalize(mPointer);
 }
 
-}}
+}

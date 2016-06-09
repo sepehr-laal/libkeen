@@ -1,7 +1,6 @@
 #pragma once
 
-namespace libkeen {
-namespace internal {
+namespace libmetrics {
 
 /*!
  * @class Scoped
@@ -37,4 +36,4 @@ Scoped<T>::~Scoped()
     mPointer = nullptr;
 }
 
-}}
+}

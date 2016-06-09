@@ -1,16 +1,15 @@
 #pragma once
 
-#include "keen.hpp"
+#include "fwd.hpp"
 #include "asio.hpp"
 
-namespace libkeen {
-namespace internal {
+namespace libmetrics {
 
 class Core
 {
 public:
     virtual ~Core();
-    void                        postEvent(const std::string& url, const std::string& json);
+    void                        postEvent(const std::string& url, const std::string& json, const std::vector<std::string>& headers);
     void                        postCache(unsigned count);
     void                        flush();
     void                        enableLogToFile(bool on = true);
@@ -41,4 +40,4 @@ private:
     CacheRef                    mCacheRef;
 };
 
-}}
+}
