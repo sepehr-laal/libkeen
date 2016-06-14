@@ -9,26 +9,26 @@ class Core
 {
 public:
     virtual ~Core();
-    void                        postEvent(const std::string& url, const std::string& json, const std::vector<std::string>& headers);
-    void                        postCache(unsigned count);
-    void                        flush();
-    void                        enableLogToFile(bool on = true);
-    void                        enableLogToConsole(bool on = true);
-    void                        clearCache();
+    void postEvent(const std::string& url, const std::string& json, const std::vector<std::string>& headers);
+    void postCache(unsigned count);
+    void flush();
+    void enableLogToFile(bool on = true);
+    void enableLogToConsole(bool on = true);
+    void clearCache();
 
 public:
-    static unsigned             useCount();
-    static CoreRef              instance();
-    static void                 release();
+    static unsigned useCount();
+    static CoreRef  instance();
+    static void     release();
 
 private:
-    enum class AccessType       { Current, Renew, Release };
+    enum class AccessType { Current, Renew, Release };
 
 private:
-    explicit                    Core();
-    void                        respawn();
-    void                        shutdown();
-    static CoreRef              instance(AccessType);
+    explicit        Core();
+    void            respawn();
+    void            shutdown();
+    static CoreRef  instance(AccessType);
 
 private:
     asio::io_service            mIoService;
